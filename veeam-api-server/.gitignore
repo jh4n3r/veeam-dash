@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Archivos de Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Archivos de configuración local (¡NUNCA SUBAS TUS SECRETOS!)
+.env
+veeam-api-server/.env
+veeam-api-server/veeam_history.db
+
+# Build de producción (si lo llegas a crear)
+veeam-dashboard/build/
