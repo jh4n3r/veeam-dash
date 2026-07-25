@@ -13,3 +13,93 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* --- ESTILOS DE IMPRESIÓN VECTORIAL Y PDF MULTIPÁGINA COMPACTO --- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
+  body, html {
+    background-color: #ffffff !important;
+    color: #1a252f !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    font-size: 9.5pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar barra de navegación, botones y footer al generar PDF */
+  header, nav, footer, .app-navbar, .no-print, button, input, select {
+    display: none !important;
+  }
+
+  /* Eliminar offset superior en PDF */
+  .app-content {
+    padding-top: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Estilo compacto para tablas de reporte en PDF */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9pt !important;
+  }
+
+  th {
+    padding: 5px 6px !important;
+    font-size: 9.5pt !important;
+    background-color: #f1f3f5 !important;
+  }
+
+  td {
+    padding: 4px 6px !important;
+    font-size: 8.5pt !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+
+  h1, h2, h3, h4 {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+    font-size: 14pt !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Contenedor específico del gráfico de topología */
+  .printable-diagram-container {
+    width: 100% !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .printable-diagram-container svg {
+    width: 100% !important;
+    height: 92vh !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    object-fit: contain !important;
+  }
+
+  div[style*="overflowX"], div[style*="overflow-x"] {
+    overflow: visible !important;
+  }
+}

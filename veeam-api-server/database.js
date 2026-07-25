@@ -9,7 +9,7 @@ const parseDMYDate = (dmyString) => {
   const dateParts = parts[0].split('/');
   const timeParts = (parts[1] || '00:00:00').split(':');
   if (dateParts.length !== 3) {
-    console.warn(`Fecha desconocida en DB: ${dmyString}. Devolviendo original.`);
+    // Si ya parece una fecha ISO (contiene T o -), no avisar, solo devolver
     return dmyString;
   }
   const [day, month, year] = dateParts;
@@ -29,6 +29,9 @@ const initDb = () => {
         job_type TEXT,
         status TEXT,
         last_run_time TEXT NOT NULL,
+        is_retry INTEGER DEFAULT 0,
+        will_retry INTEGER DEFAULT 0,
+        result_details TEXT,
         UNIQUE(job_name, last_run_time)
       )`);
       
@@ -56,9 +59,15 @@ const initDb = () => {
       db.run(`CREATE TABLE IF NOT EXISTS cache_managed_servers (id INTEGER PRIMARY KEY DEFAULT 1, data TEXT)`);
       db.run(`CREATE TABLE IF NOT EXISTS cache_backup_objects (id INTEGER PRIMARY KEY DEFAULT 1, data TEXT)`);
       db.run(`CREATE TABLE IF NOT EXISTS cache_sessions (id INTEGER PRIMARY KEY DEFAULT 1, data TEXT)`);
+      db.run(`CREATE TABLE IF NOT EXISTS cache_jobs (id INTEGER PRIMARY KEY DEFAULT 1, data TEXT)`);
 
       db.run("ALTER TABLE settings ADD COLUMN refresh_interval_minutes INTEGER DEFAULT 5", () => {});
       db.run("ALTER TABLE settings ADD COLUMN last_cache_refresh TEXT", () => {});
+
+      // Nuevas columnas en la base de datos de historial de jobs
+      db.run("ALTER TABLE job_history ADD COLUMN is_retry INTEGER DEFAULT 0", () => {});
+      db.run("ALTER TABLE job_history ADD COLUMN will_retry INTEGER DEFAULT 0", () => {});
+      db.run("ALTER TABLE job_history ADD COLUMN result_details TEXT", () => {});
 
       db.run(`INSERT OR IGNORE INTO settings (id, smtp_host, smtp_port, smtp_user, smtp_pass, from_email, to_email, refresh_interval_minutes) 
               VALUES (1, '', 587, '', '', '', '', 5)`);
@@ -76,16 +85,39 @@ const initDb = () => {
   });
 };
 
-// --- (insertJobRun sin cambios) ---
 const insertJobRun = (job) => {
-  const { name, sessionType, result, creationTime } = job;
+  const { name, sessionType, result, creationTime, isRetry, willRetry } = job;
   if (!name || !creationTime) return; 
-  const stmt = db.prepare("INSERT OR IGNORE INTO job_history (job_name, job_type, status, last_run_time) VALUES (?, ?, ?, ?)");
-  stmt.run(name, sessionType, result.result, creationTime);
+
+  const status = typeof result === 'object' && result !== null ? result.result : (result || 'Unknown');
+  const details = typeof result === 'object' && result !== null ? result.resultDetails : '';
+  const isRetryVal = isRetry ? 1 : 0;
+  const willRetryVal = willRetry ? 1 : 0;
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO job_history 
+    (job_name, job_type, status, last_run_time, is_retry, will_retry, result_details) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+  
+  stmt.run(name, sessionType, status, creationTime, isRetryVal, willRetryVal, details, (err) => {
+    if (err) {
+      // Fallback por compatibilidad
+      const fallbackStmt = db.prepare("INSERT OR REPLACE INTO job_history (job_name, job_type, status, last_run_time) VALUES (?, ?, ?, ?)");
+      fallbackStmt.run(name, sessionType, status, creationTime);
+      fallbackStmt.finalize();
+    }
+  });
   stmt.finalize();
 };
 
-// --- (getJobHistory sin cambios) ---
+const cleanupOldJobs = (daysOld = 30) => {
+  const dateStr = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString();
+  db.run("DELETE FROM job_history WHERE last_run_time < ?", [dateStr], (err) => {
+    if (err) console.error("Error al limpiar trabajos antiguos:", err);
+  });
+};
+
 const getJobHistory = () => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM job_history", (err, rows) => {
@@ -95,7 +127,12 @@ const getJobHistory = () => {
         sessionType: row.job_type,
         creationTime: parseDMYDate(row.last_run_time),
         endTime: parseDMYDate(row.last_run_time), 
-        result: { result: row.status, resultDetails: row.status },
+        result: { 
+          result: row.status, 
+          resultDetails: row.result_details || row.status || 'Sin detalles' 
+        },
+        isRetry: row.is_retry === 1,
+        willRetry: row.will_retry === 1,
         isFromOneDb: true
       }));
       resolve(formattedRows);
@@ -191,11 +228,12 @@ const getFromCache = (tableName) => {
 module.exports = { 
   initDb, 
   insertJobRun, 
+  cleanupOldJobs,
   getJobHistory,
   getSettings,
   saveSettings,
   updateLastRefreshTime,
-  getLastRefreshTime, // <-- Exportar nueva función
+  getLastRefreshTime,
   getSchedule,
   saveSchedule,
   updateCache,

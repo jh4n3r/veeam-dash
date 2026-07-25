@@ -1,82 +1,125 @@
-# Veeam Dashboard (React + Node.js)
+# 📊 Veeam Dashboard (Edición WinRM / PowerShell)
 
-Este proyecto es un dashboard web para monitorear **Veeam Backup & Replication (VBR)** y **Veeam ONE**, construido con **React** en el frontend y **Node.js/Express** en el backend.  
-Utiliza **SQLite** como caché local para visualización offline y generación de reportes automáticos.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![WinRM](https://img.shields.io/badge/WinRM-HTTPS%205986-red.svg)](https://learn.microsoft.com/en-us/windows/winrm/)
+
+**Veeam Dashboard (WinRM Edition)** es un sistema de monitoreo en tiempo real y visualización para **Veeam Backup & Replication (VBR)**. 
+
+A diferencia de la versión API REST, esta edición se conecta directamente al servidor Veeam mediante **WinRM (Windows Remote Management - HTTPS)** para ejecutar comandos PowerShell nativos (`Veeam.Backup.PowerShell`), almacenando la información en una base de datos local **SQLite** para maximizar la velocidad de respuesta, permitir consulta offline y generar reportes y diagramas históricos.
 
 ---
 
-## 📁 Estructura del proyecto
+## 🏛️ Arquitectura del Sistema
 
 ```
-/
-├── veeam-api-server/ (Backend - Node.js)
-│   ├── .env (¡IMPORTANTE! Se crea/edita desde la UI o manualmente)
-│   ├── veeam_history.db (Base de datos de caché)
-│   ├── database.js
-│   ├── index.js
-│   ├── package.json
-│   └── ... (otros servicios)
-└── veeam-dashboard/ (Frontend - React)
-    ├── public/
-    │   └── index.html (Aquí se cambia el título de la app)
+┌─────────────────────────┐          HTTP          ┌───────────────────────────┐
+│                         │  <-------------------> │                           │
+│  Frontend (React.js)    │   API REST (Port 3001) │   Backend (Node.js)       │
+│  http://localhost:3000  │                        │   veeam-api-server        │
+└─────────────────────────┘                        └─────────────┬─────────────┘
+                                                                 │ WinRM (HTTPS 5986)
+                                                                 │ PowerShell Cmdlets
+                                                                 ▼
+                                                   ┌───────────────────────────┐
+                                                   │ Servidor Veeam B&R        │
+                                                   │ (Veeam PowerShell Module) │
+                                                   └───────────────────────────┘
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+veeam-dash/
+├── Setup-WinRM.ps1           # Script PowerShell para habilitar WinRM en Servidor Veeam
+├── README.md                 # Documentación del proyecto
+├── .gitignore                # Reglas de exclusión para Git
+├── veeam-api-server/         # Backend (Node.js + Express + SQLite + WinRM)
+│   ├── .env.example          # Plantilla de variables de entorno
+│   ├── database.js           # Gestión y esquema de base de datos SQLite
+│   ├── winrmService.js       # Servicio de comunicación WinRM
+│   ├── index.js              # Servidor API Express
+│   └── package.json
+└── veeam-dashboard/          # Frontend (React.js)
     ├── src/
-    │   ├── App.js
-    │   ├── DashboardPage.js
-    │   ├── ConfigPage.js
-    │   └── ... (otros componentes)
+    │   ├── App.js            # Componente principal y rutas
+    │   ├── DashboardPage.js  # Vista principal de estados de backups
+    │   ├── ConfigPage.js     # Configuración de conexiones
+    │   ├── LogsPage.js       # Vista detallada de logs
+    │   └── DiagramsPage.js   # Gráficos y diagramas de arquitectura
     └── package.json
 ```
 
 ---
 
-## ⚙️ Archivo de configuración `.env`
+## 📋 Requisitos Previos
 
-Ejemplo: `veeam-api-server/.env`
+1. **Servidor Veeam Backup & Replication (VBR)**:
+   - Sistema Operativo Windows Server.
+   - Módulo `Veeam.Backup.PowerShell` instalado (incluido con Veeam B&R).
+   - Servicio WinRM activo en puerto HTTPS 5986.
 
-```bash
-# --- API de Veeam Backup & Replication (Puerto 9419) ---
-VEEAM_USER="user"
-VEEAM_PASS="Pass"
-VEEAM_SERVER="192.168.1.x"
-VEEAM_PORT="9419"
-VEEAM_API_VERSION="1.2-rev1"
+2. **Servidor Backend / Cliente**:
+   - **Node.js** (v18.x o superior)
+   - **npm** (v9.x o superior)
 
-# --- API de Veeam ONE (Puerto 1239) ---
-VEEAM_ONE_SERVER="192.168.1.x"
-VEEAM_ONE_PORT="1239"
-VEEAM_ONE_USER="VEEAM-SERVER\\user"
-VEEAM_ONE_PASS="Pass"
+---
 
-# --- Configuración de Email (O365) ---
-EMAIL_USER=""
-EMAIL_PASS=""
-EMAIL_TO=""
+## ⚙️ 1. Configuración del Servidor Veeam (WinRM)
+
+En el Servidor de Veeam Backup & Replication, ejecuta PowerShell como **Administrador** y utiliza el script incluido `Setup-WinRM.ps1` para abrir y asegurar la conexión WinRM:
+
+```powershell
+# 1. Abre PowerShell como Administrador en el Servidor Veeam
+# 2. Revisa y ajusta las variables $IpVeeam y $AllowedIPs en Setup-WinRM.ps1
+.\Setup-WinRM.ps1
 ```
 
----
-
-## 🧩 Requisitos
-
-- Node.js v18 o superior
-- npm
+> 💡 **Nota**: El script genera un certificado SSL autofirmado, crea un Listener en el puerto `5986` y habilita la regla en el Windows Firewall únicamente para las IPs autorizadas de tu backend.
 
 ---
 
-## 🛠️ Instalación
+## 🛠️ 2. Instalación y Configuración del Proyecto
 
-1. Clonar el repositorio:
+### Clonar el repositorio:
 ```bash
 git clone https://github.com/jh4n3r/veeam-dash.git
 cd veeam-dash
 ```
 
-2. Instalar dependencias del backend:
+### Configuración del Backend (`veeam-api-server`):
 ```bash
 cd veeam-api-server
 npm install
 ```
 
-3. Instalar dependencias del frontend:
+Crea un archivo `.env` basado en la plantilla `.env.example`:
+```bash
+cp .env.example .env
+```
+
+Edita `veeam-api-server/.env` con tus credenciales WinRM:
+```env
+# --- Conexión WinRM a Servidor Veeam ---
+VEEAM_USER="DOMINIO\usuario"
+VEEAM_PASS="TuPasswordWinRM"
+VEEAM_SERVER="192.168.X.X"
+VEEAM_WINRM_PORT="5986"
+
+# --- Configuración del Servidor API ---
+PORT=3001
+FRONTEND_URL="http://localhost:3000"
+
+# --- Notificaciones Email SMTP (Opcional) ---
+EMAIL_USER="notificaciones@dominio.com"
+EMAIL_PASS="TuPasswordEmail"
+EMAIL_TO="admin@dominio.com"
+```
+
+### Configuración del Frontend (`veeam-dashboard`):
 ```bash
 cd ../veeam-dashboard
 npm install
@@ -84,46 +127,42 @@ npm install
 
 ---
 
-## 🚀 Cómo ejecutar
+## 🚀 Cómo Ejecutar
 
-### Backend (API)
+### Iniciar Backend (API Node.js):
 ```bash
 cd veeam-api-server
 node index.js
 ```
-Servidor: `http://localhost:3001`
+El servidor backend se iniciará en `http://localhost:3001`.
 
-### Frontend (React)
+### Iniciar Frontend (React UI):
 ```bash
 cd veeam-dashboard
 npm start
 ```
-App: `http://localhost:3000`
+La aplicación React se abrirá en `http://localhost:3000`.
 
 ---
 
-## ⚙️ Configuración inicial en la UI
+## 🔒 Seguridad y Buenas Prácticas de Git
 
-1. Abre `http://localhost:3000`.  
-2. Ve a la pestaña **Configuración**.  
-3. Rellena los campos de conexión a **Veeam API** y **Veeam ONE**.  
-4. Configura los correos (opcional).  
-5. Haz clic en **Guardar configuración**.  
-6. Reinicia el backend para aplicar cambios.
+Para evitar subir información sensible a GitHub, asegúrate de mantener actualizados los patrones de exclusión en `.gitignore`:
 
----
-
-## 🌐 Acceso en red
-
-- Frontend: `http://<IP_DEL_SERVIDOR>:3000`  
-- Backend: `http://<IP_DEL_SERVIDOR>:3001`
-
-Asegúrate de permitir los puertos `3000` y `3001` (TCP) en el firewall para acceso LAN.
+- **NUNCA subas archivos `.env`** que contengan nombres de usuario, contraseñas o nombres de dominio.
+- **NUNCA subas la base de datos `veeam_history.db`** producida en entornos reales.
+- **NUNCA subas llaves o certificados SSL** (`*.cer`, `*.pem`, `*.key`).
 
 ---
 
-## 🧑‍💻 Autor
+## 🧑‍💻 Autor y Contacto
 
-**[@jh4n3r](https://github.com/jh4n3r)**
+- **Autor**: jh4n3r
+- **Email**: [jh4n3r@outlook.com](mailto:jh4n3r@outlook.com)
+- **Repositorio GitHub**: [https://github.com/jh4n3r/veeam-dash](https://github.com/jh4n3r/veeam-dash)
 
-Licencia: **MIT**
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo `LICENSE` para más detalles.

@@ -1,70 +1,69 @@
-# Getting Started with Create React App
+# 🖥️ Veeam Dashboard (Frontend React UI)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Author](https://img.shields.io/badge/Author-jh4n3r-green.svg)](https://github.com/jh4n3r)
 
-## Available Scripts
+Este directorio contiene la interfaz web de usuario (**Frontend**) de **Veeam Dashboard**, construida con **React.js** y diseñada para ofrecer un centro de control visual e interactivo para el monitoreo de infraestructura **Veeam Backup & Replication**.
 
-In the project directory, you can run:
+---
+
+## 🚀 Características Principales
+
+- **📊 Dashboard en Tiempo Real**: Tarjetas KPI, resumen de estado de trabajos (Success, Warning, Failed, Running), velocidad de procesamiento y volúmenes transferidos.
+- **📜 Visor de Logs Avanzado**: Filtrado multinivel de registros por gravedad, fecha o nombre de trabajo, con inspector detallado de errores WinRM/PowerShell.
+- **🗺️ Diagramas de Arquitectura**: Representación gráfica e interactiva de la topología de backups (Servidor VBR $\rightarrow$ Proxies $\rightarrow$ Repositorios $\rightarrow$ Nube/Cintas).
+- **⚙️ Centro de Configuración**: Gestión remota de parámetros WinRM, credenciales, servidor SMTP de alertas y ejecución de sincronizaciones manuales.
+- **💾 Exportación de Reportes**: Descarga de reportes en formato CSV y vista apta para impresión.
+- **🔄 Auto-Refresco Configurable**: Actualización automática de datos con intervalos seleccionables (30s, 1m, 5m).
+
+---
+
+## 📁 Estructura del Proyecto Frontend
+
+```
+veeam-dashboard/
+├── public/
+│   ├── favicon.ico
+│   └── index.html             # HTML base del frontend
+├── src/
+│   ├── App.js                 # Enrutador principal y barra de navegación fija
+│   ├── App.css                # Estilos globales y utilidades
+│   ├── index.css              # Reset de CSS y estilos base
+│   ├── DashboardPage.js       # Vista principal de estados y métricas KPI
+│   ├── LogsPage.js            # Visor e inspector de logs
+│   ├── DiagramsPage.js        # Diagramas de infraestructura y flujos
+│   └── ConfigPage.js          # Formulario de configuración .env y tests
+├── README.md                  # Documentación de la aplicación React
+└── MANUAL_USO.md              # 📖 Manual de usuario completo con todas las funciones
+```
+
+---
+
+## 🛠️ Comandos Disponibles
+
+En este directorio puedes ejecutar los siguientes comandos de `npm`:
 
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Ejecuta la aplicación en modo de desarrollo.\
+Abre [http://localhost:3000](http://localhost:3000) para verla en el navegador. La página se recargará automáticamente si realizas cambios en el código.
 
 ### `npm run build`
+Compila la aplicación para producción en la carpeta `build`.\
+Optimiza la construcción de React para obtener el mejor rendimiento y minifica los archivos JS/CSS.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📖 Manual de Usuario y Guía de Funcionalidades
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Para consultar la guía paso a paso de uso de la interfaz, el detalle de cada vista, los filtros y la resolución de problemas, consulta el archivo:
 
-### `npm run eject`
+👉 **[MANUAL_USO.md](./MANUAL_USO.md)**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🧑‍💻 Autor
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **Autor**: jh4n3r
+- **Contacto**: [jh4n3r@outlook.com](mailto:jh4n3r@outlook.com)
+- **Repositorio**: [https://github.com/jh4n3r/veeam-dash](https://github.com/jh4n3r/veeam-dash)

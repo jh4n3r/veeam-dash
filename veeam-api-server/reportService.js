@@ -16,32 +16,40 @@ const generatePdfReport = async () => {
     });
     
     const page = await browser.newPage();
+    await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 1.5 });
     
-    console.log('Navegando a http://localhost:3000...');
-    // Corregido: Esperar a que el HTML cargue
-    await page.goto('http://localhost:3000/', { 
-      waitUntil: 'domcontentloaded',
-      timeout: 30000
+    // Navegar a la URL del frontend de React (puerto 3000)
+    const dashUrl = process.env.FRONTEND_URL || 'http://localhost:3000/?print=true';
+    console.log(`Navegando a ${dashUrl}...`);
+    await page.goto(dashUrl, { 
+      waitUntil: 'networkidle0',
+      timeout: 45000
     });
 
-    // Esperar a que el gráfico (y los datos del caché) se rendericen
-    await page.waitForSelector('.recharts-pie', { timeout: 15000 });
-    console.log('Dashboard cargado. Generando PDF...');
+    // Esperar a que se rendericen los componentes y tablas
+    try {
+      await page.waitForSelector('.recharts-pie', { timeout: 15000 });
+    } catch (e) {
+      await page.waitForSelector('table', { timeout: 10000 }).catch(() => {});
+    }
+    
+    await new Promise(r => setTimeout(r, 2000));
+    console.log('Dashboard cargado. Generando PDF horizontal completo...');
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
+      landscape: true,
       printBackground: true,
-      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      margin: { top: '10px', right: '10px', bottom: '10px', left: '10px' }
     });
 
-    console.log('PDF generado en memoria.');
+    console.log('PDF generado exitosamente.');
     return pdfBuffer;
 
   } catch (error) {
     console.error('Error durante la generación del PDF:', error.message);
-    // Si falla el selector, es porque el caché está vacío.
-    if (error.message.includes("Waiting for selector")) {
-        throw new Error("No se pudo generar el PDF. El caché de datos está vacío. Intente una 'Actualización Manual' primero.");
+    if (error.message.includes('Waiting for selector') || error.message.includes('waitForSelector')) {
+      throw new Error('No se pudo generar el PDF. El caché está vacío o el servidor no responde. Intente \'Actualizar Datos\' primero.');
     }
     throw error; 
   } finally {

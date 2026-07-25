@@ -41,17 +41,7 @@ const inputStyle = {
   borderRadius: '6px',
   boxSizing: 'border-box'
 };
-// --- NUEVO: Estilo para Select ---
-const selectStyle = {
-  ...inputStyle,
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-  backgroundPosition: 'right 0.5rem center',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '1.5em 1.5em',
-  paddingRight: '2.5rem',
-};
-// --- FIN NUEVO ---
+
 const buttonStyle = {
   backgroundColor: '#007bff',
   color: 'white',
@@ -89,16 +79,7 @@ const DAYS_OF_WEEK = [
   { label: 'Sáb', value: '6' },
 ];
 
-// --- NUEVO: Opciones de API VBR ---
-const VBR_API_VERSIONS = [
-  "1.2-rev1",
-  "1.2-rev0",
-  "1.1-rev0",
-  "1.0-rev2",
-  "1.0-rev1",
-  "1.0-rev0",
-];
-// --- FIN NUEVO ---
+
 
 // --- FIN DE ESTILOS ---
 
@@ -123,6 +104,7 @@ export default function ConfigPage() {
     VEEAM_USER: '',
     VEEAM_PASS: '',
     VEEAM_SERVER: '',
+    VEEAM_WINRM_PORT: '5986',
     VEEAM_PORT: '9419',
     VEEAM_API_VERSION: '1.2-rev1',
     VEEAM_ONE_SERVER: '',
@@ -330,55 +312,28 @@ export default function ConfigPage() {
   return (
     <div style={configLayoutStyle}>
     
-      {/* --- NUEVA SECCIÓN: VEEAM API --- */}
+      {/* --- SECCIÓN: CONEXIÓN WINRM A VEEAM --- */}
       <div style={cardStyle}>
-        <h3 style={h3Style}>Conexión Veeam API</h3>
-        
-        <h4 style={{...h3Style, fontSize: '16px', border: 'none'}}>Veeam VBR (Puerto 9419)</h4>
+        <h3 style={h3Style}>Conexión WinRM a Servidor Veeam</h3>
+        <p style={{ fontSize: '13px', color: '#6c757d', marginTop: '-12px', marginBottom: '20px' }}>
+          Configura las credenciales de Windows y puerto WinRM (HTTPS) del servidor Veeam para extraer la telemetría.
+        </p>
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
           <div style={formGroupStyle}>
-            <label style={labelStyle}>Servidor VBR</label>
+            <label style={labelStyle}>Servidor Veeam (IP o Hostname)</label>
             <input type="text" name="VEEAM_SERVER" value={veeamSettings.VEEAM_SERVER} onChange={handleVeeamSettingChange} style={inputStyle} />
           </div>
           <div style={formGroupStyle}>
-            <label style={labelStyle}>Puerto VBR</label>
-            <input type="text" name="VEEAM_PORT" value={veeamSettings.VEEAM_PORT} onChange={handleVeeamSettingChange} style={inputStyle} />
+            <label style={labelStyle}>Puerto WinRM (ej: 5986)</label>
+            <input type="text" name="VEEAM_WINRM_PORT" value={veeamSettings.VEEAM_WINRM_PORT} onChange={handleVeeamSettingChange} style={inputStyle} />
           </div>
           <div style={formGroupStyle}>
-            <label style={labelStyle}>Usuario VBR</label>
+            <label style={labelStyle}>Usuario WinRM (ej: DOMINIO\Usuario o Administrador)</label>
             <input type="text" name="VEEAM_USER" value={veeamSettings.VEEAM_USER} onChange={handleVeeamSettingChange} style={inputStyle} />
           </div>
           <div style={formGroupStyle}>
-            <label style={labelStyle}>Contraseña VBR</label>
+            <label style={labelStyle}>Contraseña WinRM</label>
             <input type="password" name="VEEAM_PASS" value={veeamSettings.VEEAM_PASS} onChange={handleVeeamSettingChange} style={inputStyle} />
-          </div>
-        </div>
-         <div style={{...formGroupStyle, maxWidth: '300px', marginTop: '16px'}}>
-            <label style={labelStyle}>Versión de API VBR</label>
-            <select name="VEEAM_API_VERSION" value={veeamSettings.VEEAM_API_VERSION} onChange={handleVeeamSettingChange} style={selectStyle}>
-              {VBR_API_VERSIONS.map(v => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-        </div>
-
-        <h4 style={{...h3Style, fontSize: '16px', border: 'none', marginTop: '24px'}}>Veeam ONE (Puerto 1239)</h4>
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Servidor ONE</label>
-            <input type="text" name="VEEAM_ONE_SERVER" value={veeamSettings.VEEAM_ONE_SERVER} onChange={handleVeeamSettingChange} style={inputStyle} />
-          </div>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Puerto ONE</label>
-            <input type="text" name="VEEAM_ONE_PORT" value={veeamSettings.VEEAM_ONE_PORT} onChange={handleVeeamSettingChange} style={inputStyle} />
-          </div>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Usuario ONE (ej: DOMINIO\Usuario)</label>
-            <input type="text" name="VEEAM_ONE_USER" value={veeamSettings.VEEAM_ONE_USER} onChange={handleVeeamSettingChange} style={inputStyle} />
-          </div>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Contraseña ONE</label>
-            <input type="password" name="VEEAM_ONE_PASS" value={veeamSettings.VEEAM_ONE_PASS} onChange={handleVeeamSettingChange} style={inputStyle} />
           </div>
         </div>
         

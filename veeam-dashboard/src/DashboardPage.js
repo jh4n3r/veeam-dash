@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, Legend } from 'recharts';
 const layoutStyle = {
   padding: '24px',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  backgroundColor: '#f8f9fa' 
+  backgroundColor: '#f8f9fa'
 };
 const dualGridStyle = {
   display: 'grid',
@@ -25,8 +25,8 @@ const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: '14px'
 const headerStyle = { backgroundColor: '#f1f3f5', textAlign: 'left', padding: '8px' };
 const cellStyle = { padding: '8px', borderBottom: '1px solid #eee' };
 const noDataStyle = { color: '#666', fontStyle: 'italic' };
-const h3Style = { 
-  margin: '0 0 16px', 
+const h3Style = {
+  margin: '0 0 16px',
   color: '#2c3e50',
   fontWeight: '600',
   borderBottom: '1px solid #e9ecef',
@@ -85,44 +85,78 @@ const ProgressBar = ({ isVisible }) => (
 // ==================================================================
 // --- COMPONENTE 1: DateFilter (Sin cambios) ---
 // ==================================================================
-const DateFilter = ({ onFilterChange }) => {
-  const handleChange = (e) => {
-    const value = e.target.value;
-    let startDate = null;
+const DateFilter = ({ onFilterChange, onStatusChange }) => {
+  const [dateRange, setDateRange] = useState('24h');
+  const [status, setStatus] = useState('all');
 
+  const handleDateChange = (e) => {
+    const value = e.target.value;
+    setDateRange(value);
+    let startDate = null;
     if (value === '24h') {
       startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    } else if (value === '3d') {
+      startDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     } else if (value === '7d') {
       startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     } else if (value === '30d') {
       startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    } else {
-      startDate = null; // Todos
     }
     onFilterChange(startDate);
   };
 
+  const handleStatusChange = (e) => {
+    const value = e.target.value;
+    setStatus(value);
+    onStatusChange(value);
+  };
+
   return (
-    <div style={{ 
-      marginBottom: '16px', 
-      textAlign: 'right', 
-      marginLeft: '16px'
+    <div style={{
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: '12px'
     }} className="no-print">
-      <label style={{ marginRight: '8px', fontWeight: '600' }}>
-        Filtrar por:
-      </label>
-      <select onChange={handleChange} defaultValue="24h" style={{
-        padding: '10px 14px',
-        borderRadius: '6px',
-        border: '1px solid #ccc',
-        fontSize: '14px',
-        backgroundColor: '#fff'
-      }}>
-        <option value="24h">Últimas 24 horas</option>
-        <option value="7d">Últimos 7 días</option>
-        <option value="30d">Últimos 30 días</option>
-        <option value="all">Todos</option>
-      </select>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <label style={{ marginRight: '8px', fontWeight: '600' }}>
+          Estado:
+        </label>
+        <select onChange={handleStatusChange} value={status} style={{
+          padding: '10px 14px',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          fontSize: '14px',
+          backgroundColor: '#fff'
+        }}>
+          <option value="all">Todos los estados</option>
+          <option value="Running">En Proceso (Running)</option>
+          <option value="Success">Success</option>
+          <option value="Warning">Warning</option>
+          <option value="Failed">Failed</option>
+          <option value="Retry">Reintentos (Retry)</option>
+        </select>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <label style={{ marginRight: '8px', fontWeight: '600' }}>
+          Rango:
+        </label>
+        <select onChange={handleDateChange} value={dateRange} style={{
+          padding: '10px 14px',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          fontSize: '14px',
+          backgroundColor: '#fff'
+        }}>
+          <option value="24h">Últimas 24 horas</option>
+          <option value="3d">Últimos 3 días</option>
+          <option value="7d">Últimos 7 días</option>
+          <option value="30d">Últimos 30 días</option>
+          <option value="all">Todo el historial</option>
+        </select>
+      </div>
     </div>
   );
 };
@@ -132,7 +166,7 @@ const DateFilter = ({ onFilterChange }) => {
 // ==================================================================
 const LastResultGrid = ({ jobs }) => {
   const lastResults = {};
-  
+
   if (jobs && Array.isArray(jobs)) {
     jobs.forEach(job => {
       const jobTime = job.creationTime ? new Date(job.creationTime) : null;
@@ -146,13 +180,13 @@ const LastResultGrid = ({ jobs }) => {
         lastResults[job.name] = job;
         return;
       }
-      
+
       if (jobTime && (!existingTime || jobTime > existingTime)) {
-         lastResults[job.name] = job;
+        lastResults[job.name] = job;
       } else if (!jobTime && !existingTime) {
-         if (job.result?.result !== 'Unknown') {
-            lastResults[job.name] = job;
-         }
+        if (job.result?.result !== 'Unknown') {
+          lastResults[job.name] = job;
+        }
       }
     });
   }
@@ -172,6 +206,7 @@ const LastResultGrid = ({ jobs }) => {
             Success: '#28a745',
             Warning: '#ffc107',
             Failed: '#dc3545',
+            Running: '#007bff',
             None: '#6c757d',
           }[status] || '#6c757d';
 
@@ -188,6 +223,8 @@ const LastResultGrid = ({ jobs }) => {
             }}>
               <div style={{ fontSize: '24px', marginBottom: '8px' }}>
                 {status}
+                {job.isRetry && <span style={{ fontSize: '11px', display: 'block', opacity: 0.9 }}>Reintento</span>}
+                {job.willRetry && <span style={{ fontSize: '11px', display: 'block', opacity: 0.9 }}>Se reintentará</span>}
               </div>
               <div style={{ fontSize: '13px', opacity: 0.9, wordBreak: 'break-word' }}>
                 {job.name}
@@ -200,13 +237,47 @@ const LastResultGrid = ({ jobs }) => {
   );
 };
 
-const JobsTable = ({ jobs }) => {
+const JobsTable = ({ jobs, allJobs }) => {
+  const [expandedRow, setExpandedRow] = useState(null);
+  // Detect print/PDF mode via URL parameter (?print=true)
+  const isPrintMode = new URLSearchParams(window.location.search).get('print') === 'true';
+
   if (!jobs || jobs.length === 0) {
-    return <p style={noDataStyle}>No hay jobs en el rango seleccionado.</p>;
+    // Find the most recent job across ALL sessions to help the user understand the situation
+    const mostRecent = (allJobs && allJobs.length > 0)
+      ? allJobs.filter(j => j.creationTime).sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime))[0]
+      : null;
+    const mostRecentDate = mostRecent
+      ? new Date(mostRecent.creationTime).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : null;
+
+    return (
+      <div style={{ padding: '16px 4px', textAlign: 'center', color: '#666' }}>
+        <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <p style={{ margin: '0 0 6px', fontWeight: '600', color: '#495057' }}>No hay jobs en el rango seleccionado.</p>
+        {mostRecentDate ? (
+          <p style={{ margin: 0, fontSize: '13px', color: '#6c757d' }}>
+            El último job registrado en caché es: <strong>{mostRecent.name}</strong> ({mostRecentDate}).
+            <br/>Amplíe el rango de fechas o presione <strong>Actualizar Datos</strong> para refrescar el caché.
+          </p>
+        ) : (
+          <p style={{ margin: 0, fontSize: '13px', color: '#6c757d' }}>Presione <strong>Actualizar Datos</strong> para cargar sessions desde Veeam.</p>
+        )}
+      </div>
+    );
   }
 
   const thStyle = { padding: '12px 8px', fontWeight: '600', color: '#333' };
   const tdStyle = { padding: '10px 8px', color: '#444' };
+
+  const toggleRow = (index) => {
+    setExpandedRow(expandedRow === index ? null : index);
+  };
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString('es-ES', {
@@ -245,6 +316,7 @@ const JobsTable = ({ jobs }) => {
       }}>
         <thead>
           <tr style={{ backgroundColor: '#f8f9fa', textAlign: 'left' }}>
+            <th style={{ ...thStyle, width: '40px' }}></th>
             <th style={thStyle}>Job</th>
             <th style={thStyle}>Tipo</th>
             <th style={thStyle}>Estado</th>
@@ -259,41 +331,119 @@ const JobsTable = ({ jobs }) => {
           {jobs.map((job, i) => {
             const start = job.creationTime;
             const end = job.endTime;
-            const duration = (start && end && !job.isFromOneDb) 
-              ? formatDuration(new Date(end) - new Date(start)) 
+            const duration = (start && end && !job.isFromOneDb)
+              ? formatDuration(new Date(end) - new Date(start))
               : '—';
-            
+
             const status = job.result?.result || 'Unknown';
             const color = {
               Success: '#28a745',
               Warning: '#ffc107',
               Failed: '#dc3545',
+              Running: '#007bff',
               None: '#6c757d'
             }[status] || '#6c757d';
 
+            // In print mode, expand ONLY Warning and Failed rows (alerts/errors)
+            const isExpanded = (isPrintMode && (status === 'Failed' || status === 'Warning')) || expandedRow === i;
+
             return (
-              <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={tdStyle}><strong>{job.name}</strong></td>
-                <td style={tdStyle}>{job.sessionType || '—'}</td>
-                <td style={tdStyle}>
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    backgroundColor: color + '20',
-                    color: color,
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {status}
-                  </span>
-                </td>
-                <td style={tdStyle}>{start ? formatDate(start) : '—'}</td>
-                <td style={tdStyle}>{(end && !job.isFromOneDb) ? formatDate(end) : '—'}</td>
-                <td style={tdStyle}>{duration}</td>
-                <td style={tdStyle}>{formatBytes(job.statistics?.processedSize)}</td>
-                <td style={tdStyle}>{job.result?.resultDetails || '—'}</td>
-              </tr>
+              <React.Fragment key={i}>
+                <tr 
+                  onClick={() => toggleRow(i)} 
+                  style={{ 
+                    borderBottom: isExpanded ? 'none' : '1px solid #eee', 
+                    cursor: 'pointer',
+                    backgroundColor: isExpanded ? '#f8f9fa' : 'white'
+                  }}
+                >
+                  <td className="expand-toggle-col" style={{ ...tdStyle, textAlign: 'center', color: '#007bff', userSelect: 'none' }}>
+                    {isPrintMode ? '' : (isExpanded ? '▼' : '▶')}
+                  </td>
+                  <td style={tdStyle}><strong>{job.name}</strong></td>
+                  <td style={tdStyle}>{job.sessionType || '—'}</td>
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        backgroundColor: color + '20',
+                        color: color,
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>
+                        {status}
+                      </span>
+                      {job.isRetry && (
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: '#e2e3e5',
+                          color: '#383d41',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          Reintento
+                        </span>
+                      )}
+                      {job.willRetry && (
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: '#fff3cd',
+                          color: '#856404',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          Se reintentará
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={tdStyle}>{start ? formatDate(start) : '—'}</td>
+                  <td style={tdStyle}>{(end && !job.isFromOneDb) ? formatDate(end) : '—'}</td>
+                  <td style={tdStyle}>{duration}</td>
+                  <td style={tdStyle}>{formatBytes(job.statistics?.processedSize)}</td>
+                  <td style={tdStyle}>{job.result?.result || '—'}</td>
+                </tr>
+                {isExpanded && (
+                  <tr className="detail-row" style={{ backgroundColor: '#f8f9fa' }}>
+                    <td colSpan="9" style={{ padding: '0 12px 10px 12px' }}>
+                      <div style={{
+                        backgroundColor: 'white',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #e9ecef',
+                      }}>
+                        <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#495057', fontWeight: '600' }}>Detalles del Job</h4>
+                        <div className="detail-content" style={{
+                          fontSize: '11px',
+                          color: '#333',
+                          whiteSpace: 'pre-wrap',
+                          fontFamily: 'monospace',
+                          backgroundColor: '#f1f3f5',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          border: '1px solid #dee2e6',
+                          lineHeight: '1.5'
+                        }}>
+                          {job.result?.resultDetails || 'No hay detalles adicionales disponibles.'}
+                        </div>
+                        <div className="detail-meta" style={{ marginTop: '6px', fontSize: '11px', color: '#6c757d', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                          <span><strong>Inicio:</strong> {job.creationTime ? formatDate(job.creationTime) : '—'}</span>
+                          <span><strong>Origen:</strong> {job.isFromOneDb ? 'Histórico (DB)' : 'Veeam Server (VBR)'}</span>
+                          {job.id && <span><strong>ID:</strong> {job.id}</span>}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             );
           })}
         </tbody>
@@ -310,14 +460,16 @@ const JobStatusPie = ({ jobs }) => {
   const success = jobs.filter(j => j.result?.result === 'Success').length;
   const warning = jobs.filter(j => j.result?.result === 'Warning').length;
   const failed = jobs.filter(j => j.result?.result === 'Failed').length;
-  const total = success + warning + failed;
+  const running = jobs.filter(j => j.result?.result === 'Running').length;
+  const total = success + warning + failed + running;
 
   const data = [
     { name: 'Success', value: success },
     { name: 'Warning', value: warning },
     { name: 'Failed', value: failed },
+    { name: 'Running', value: running },
   ];
-  const COLORS = ['#28a745', '#ffc107', '#dc3545'];
+  const COLORS = ['#28a745', '#ffc107', '#dc3545', '#007bff'];
 
   const centerLabelStyle = {
     position: 'absolute',
@@ -339,27 +491,27 @@ const JobStatusPie = ({ jobs }) => {
   };
 
   return (
-    <div style={{ 
-      width: '100%', 
-      height: 300, 
-      display: 'flex', 
+    <div style={{
+      width: '100%',
+      height: 300,
+      display: 'flex',
       justifyContent: 'center',
       position: 'relative'
     }}>
-      
+
       <div style={centerLabelStyle}>
         <div style={totalCountStyle}>{total}</div>
         <div style={totalTextStyle}>Total Jobs</div>
       </div>
 
       <PieChart width={300} height={300}>
-        <Pie 
-          data={data} 
-          dataKey="value" 
-          nameKey="name" 
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
           outerRadius={90}
           innerRadius={65} // Donut
-          fill="#8884d8" 
+          fill="#8884d8"
           label
           paddingAngle={3}
         >
@@ -515,9 +667,9 @@ const ProxiesTable = ({ proxies = [] }) => {
 
 const PrintHeader = () => (
   <div className="print-header">
-    <h1 style={{ 
-      color: '#000', 
-      fontFamily: 'Arial, sans-serif', 
+    <h1 style={{
+      color: '#000',
+      fontFamily: 'Arial, sans-serif',
       fontSize: '20pt',
       fontWeight: '600',
       textAlign: 'center'
@@ -612,67 +764,89 @@ const PrintStyles = () => (
         cursor: not-allowed;
       }
       
-      /* --- INICIO: MEJORAS AL PDF --- */
+      /* --- INICIO: ESTILOS DE IMPRESIÓN/PDF --- */
       @media print {
-        header, footer {
+        header, footer, nav, .app-navbar {
           display: none !important;
         }
         .print-header {
           display: block !important;
           text-align: center;
-          margin-bottom: 20px;
+          margin-bottom: 10px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #333;
+        }
+        .print-header h1 {
+          font-size: 15pt !important;
+          margin: 0 !important;
         }
         header.app-header, .no-print {
           display: none !important;
         }
-        
-        body, div[style*="padding: 24px"] {
+
+        body, .app-content, .dashboard-container {
           background-color: #ffffff !important;
           padding: 0 !important;
           margin: 0 !important;
           font-family: Arial, sans-serif !important;
-          font-size: 10pt;
+          font-size: 8pt !important;
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
         }
-        
+
         div[style*="box-shadow"] {
           box-shadow: none !important;
-          border: 1px solid #eeeeee !important;
+          border: 1px solid #ddd !important;
           page-break-inside: avoid !important;
-          margin-top: 16px !important;
-        }
-        
-        /* Apilar en 1 columna en PDF */
-        div[style*="gridTemplateColumns: '1fr 1fr'"] {
-          grid-template-columns: 1fr !important;
+          margin-top: 6px !important;
+          padding: 8px !important;
         }
 
-        /* Ajustar grids de cajas */
-        div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'"] {
-          grid-template-columns: repeat(4, 1fr) !important;
+        /* Historial de Jobs – ocupa página entera, puede saltar de página */
+        .jobs-table-container {
+          page-break-inside: auto !important;
+          overflow-x: visible !important;
+          margin-top: 4px !important;
+        }
+
+        /* Forzar columnas lado a lado en el PDF */
+        div[style*="gridTemplateColumns: '1fr 1fr'"] {
+          grid-template-columns: 1fr 1fr !important;
           gap: 8px !important;
+          margin-top: 6px !important;
+        }
+
+        /* Ajustar grids de tarjetas */
+        div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'"] {
+          grid-template-columns: repeat(5, 1fr) !important;
+          gap: 4px !important;
         }
         div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))'"] {
-          grid-template-columns: repeat(5, 1fr) !important;
-          gap: 8px !important;
+          grid-template-columns: repeat(6, 1fr) !important;
+          gap: 4px !important;
         }
 
-        .jobs-table-container {
-          page-break-inside: auto;
-          overflow-x: visible !important;
+        /* Tablas compactas */
+        thead { display: table-header-group; }
+        table { font-size: 7pt !important; border-collapse: collapse !important; }
+        tr, td, th { page-break-inside: avoid !important; padding: 2px 4px !important; }
+        th { font-size: 7pt !important; font-weight: bold !important; }
+
+        /* Ocultar columna del ícono expandir */
+        .expand-toggle-col { display: none !important; }
+
+        /* Filas de detalle – compactas, sin scroll */
+        .detail-row td { padding: 2px 4px 4px 4px !important; }
+        .detail-content {
+          max-height: none !important;
+          overflow: visible !important;
+          font-size: 6pt !important;
+          padding: 4px !important;
+          line-height: 1.4 !important;
         }
-        thead {
-          display: table-header-group;
-        }
-        tr, td, th {
-          page-break-inside: avoid !important;
-          padding: 6px 8px !important;
-        }
-        table {
-          font-size: 9pt !important;
-        }
-        
+        .detail-meta { font-size: 6pt !important; margin-top: 2px !important; gap: 8px !important; }
+
+        /* Colores en impresión */
         * {
           color: #000000 !important;
           box-shadow: none !important;
@@ -686,16 +860,17 @@ const PrintStyles = () => (
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
         }
-        div[style*="backgroundColor: rgb(233, 236, 239)"] > div {
-           -webkit-print-color-adjust: exact;
-           color-adjust: exact;
+        div[style*="backgroundColor: rgb(233, 236, 239)"] > div,
+        div[style*="backgroundColor: rgb(241, 243, 245)"] {
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
         }
         .recharts-pie-sector path {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
         }
       }
-      /* --- FIN: MEJORAS AL PDF --- */
+      /* --- FIN: ESTILOS DE IMPRESIÓN/PDF --- */
     `}
   </style>
 );
@@ -714,7 +889,7 @@ const ManualSendButton = ({ isSending, setIsSending }) => {
         method: 'POST',
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Error en el backend');
       }
@@ -775,35 +950,58 @@ export default function DashboardPage() {
     proxies: [],
     managedServers: [],
     backupObjects: [],
-    lastCacheRefresh: null, 
+    lastCacheRefresh: null,
   });
   const [filteredJobs, setFilteredJobs] = useState([]);
-  
-  const [isLoadingData, setIsLoadingData] = useState(true); 
-  const [isSendingMail, setIsSendingMail] = useState(false); 
 
-  const [pageError, setPageError] = useState(null); 
-  
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isSendingMail, setIsSendingMail] = useState(false);
+
+  const [pageError, setPageError] = useState(null);
+
   // URL del Backend
   const backendUrl = `http://${window.location.hostname}:3001`;
 
-  // --- 1. Función para filtrar (Sin cambios) ---
-  const handleFilterChange = useCallback((startDate) => {
-    const sortedSessions = [...(allData.sessions || [])].sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime));
+  // --- 1. Función para filtrar ---
+  const [currentStartDate, setCurrentStartDate] = useState(() => new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const [currentStatusFilter, setCurrentStatusFilter] = useState('all');
 
-    if (!startDate) {
-      setFilteredJobs(sortedSessions);
-    } else {
-      const filtered = sortedSessions.filter(session => {
+  // --- 1. Función para filtrar ---
+  const applyFilters = useCallback((sessions, startDate, statusFilter) => {
+    let filtered = [...(sessions || [])];
+
+    // Ordenar por tiempo de creación descendente
+    filtered.sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime));
+
+    // Filtro por fecha
+    if (startDate) {
+      filtered = filtered.filter(session => {
         if (!session.creationTime) return false;
-        if (session.isFromOneDb) {
-          return true;
-        }
         return new Date(session.creationTime) >= startDate;
       });
-      setFilteredJobs(filtered);
     }
-  }, [allData.sessions]); 
+
+    // Filtro por estado
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'Retry') {
+        filtered = filtered.filter(session => session.isRetry || session.willRetry);
+      } else {
+        filtered = filtered.filter(session => session.result?.result === statusFilter);
+      }
+    }
+
+    setFilteredJobs(filtered);
+  }, []);
+
+  const handleFilterChange = (startDate) => {
+    setCurrentStartDate(startDate);
+    applyFilters(allData.sessions, startDate, currentStatusFilter);
+  };
+
+  const handleStatusFilterChange = (status) => {
+    setCurrentStatusFilter(status);
+    applyFilters(allData.sessions, currentStartDate, status);
+  };
 
   // --- 2. Cargar datos del CACHÉ (GET /api/summary) ---
   // Esta función AHORA solo carga lo que está en la DB del backend.
@@ -812,11 +1010,11 @@ export default function DashboardPage() {
     if (allData.sessions.length === 0) {
       setIsLoadingData(true);
     }
-    
+
     try {
       const cacheBuster = `?_=${new Date().getTime()}`;
       const response = await fetch(`${backendUrl}/api/summary${cacheBuster}`);
-      
+
       if (!response.ok) {
         let errorMsg = 'No se pudo cargar los datos del caché del backend';
         try {
@@ -825,9 +1023,9 @@ export default function DashboardPage() {
         } catch (e) { /* ... */ }
         throw new Error(errorMsg);
       }
-      
+
       const data = await response.json();
-      
+
       setAllData({
         sessions: data.sessions || [],
         repositories: data.repositories || [],
@@ -835,12 +1033,12 @@ export default function DashboardPage() {
         managedServers: data.managedServers || [],
         backupObjects: data.backupObjects || [],
         serverInfo: data.serverInfo || {},
-        lastCacheRefresh: data.lastCacheRefresh || null 
+        lastCacheRefresh: data.lastCacheRefresh || null
       });
-      
+
       // Si la carga fue exitosa, limpiar errores
-      setPageError(null); 
-      
+      setPageError(null);
+
     } catch (err) {
       setPageError(err.message);
       // *** IMPORTANTE: No limpiar 'allData' si falla ***
@@ -856,20 +1054,20 @@ export default function DashboardPage() {
   const handleManualRefresh = async () => {
     setIsLoadingData(true);
     setPageError(null); // Limpiar error al reintentar
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/refresh-cache`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.error || 'Falló la actualización del caché');
       }
-      
+
       // Si el POST (actualización) tuvo éxito, cargar los nuevos datos
       await loadDataFromCache();
-      
+
     } catch (err) {
       console.error("Error en Refresco Manual:", err);
       setPageError(err.message);
@@ -886,33 +1084,33 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // <-- Se ejecuta solo UNA VEZ al cargar la página
 
-  
+
   // --- 5. Refresco Automático (MODIFICADO) ---
   useEffect(() => {
     let intervalId = null;
-    
+
     const setupAutoRefresh = async () => {
       try {
         const response = await fetch(`${backendUrl}/api/settings`);
         const data = await response.json();
         const intervalMinutes = data.settings?.refresh_interval_minutes || 5;
-        
+
         intervalId = setInterval(async () => {
           console.log(`[AutoRefresh] Actualizando datos (cada ${intervalMinutes} min)`);
-          
+
           if (isLoadingData) {
             console.log("[AutoRefresh] Omitido: Ya hay un refresco manual en curso.");
             return;
           }
-          
+
           // Lógica de refresco robusta
           try {
             const refreshResponse = await fetch(`${backendUrl}/api/refresh-cache`, {
               method: 'POST',
             });
             if (!refreshResponse.ok) {
-               const errData = await refreshResponse.json();
-               throw new Error(errData.error);
+              const errData = await refreshResponse.json();
+              throw new Error(errData.error);
             }
             // Si el POST tuvo éxito, cargar los nuevos datos
             await loadDataFromCache();
@@ -922,14 +1120,14 @@ export default function DashboardPage() {
             // No llamar a loadDataFromCache(), mantener datos viejos
           }
           // --- Fin lógica ---
-          
+
         }, intervalMinutes * 60000);
-        
+
       } catch (err) {
         console.error("No se pudo configurar el refresco automático:", err);
       }
     };
-    
+
     setupAutoRefresh();
 
     return () => {
@@ -942,11 +1140,8 @@ export default function DashboardPage() {
 
   // --- 6. Aplicar el filtro inicial (Sin cambios) ---
   useEffect(() => {
-    if ((allData.sessions || []).length > 0) {
-      const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      handleFilterChange(startDate);
-    }
-  }, [allData.sessions, handleFilterChange]); 
+    applyFilters(allData.sessions, currentStartDate, currentStatusFilter);
+  }, [allData.sessions, applyFilters, currentStartDate, currentStatusFilter]);
 
   // --- 7. Renderizar ---
   const isBusy = isLoadingData || isSendingMail;
@@ -963,7 +1158,7 @@ export default function DashboardPage() {
     });
   };
   const lastRefreshTimestamp = formatLastRefresh(allData.lastCacheRefresh);
-  
+
   // --- Banner de Error ---
   const ErrorBanner = ({ message, onClose }) => (
     <div style={{
@@ -978,7 +1173,7 @@ export default function DashboardPage() {
       alignItems: 'center'
     }} className="no-print">
       <span>Error: {message}</span>
-      <span onClick={onClose} style={{cursor: 'pointer', fontSize: '20px', marginLeft: '16px'}}>&times;</span>
+      <span onClick={onClose} style={{ cursor: 'pointer', fontSize: '20px', marginLeft: '16px' }}>&times;</span>
     </div>
   );
 
@@ -991,57 +1186,57 @@ export default function DashboardPage() {
       </div>
     );
   }
-  
+
   // --- Estado de Error Inicial (No hay NADA en caché) ---
   if (pageError && allData.sessions.length === 0) {
     return (
       <div style={layoutStyle}>
-         <ProgressBar isVisible={isBusy} />
-         <header 
-            className="app-header no-print" 
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              paddingBottom: '16px',
-              marginBottom: '24px',
-              padding: '0 24px' 
-            }}
-          >
-           <div style={{display: 'flex', alignItems: 'center'}}>
-              <div style={{marginRight: '16px'}}>
-                 {/* MODIFICADO: onRefresh ahora es handleManualRefresh */}
-                <RefreshButton onRefresh={handleManualRefresh} isLoading={isLoadingData} />
-              </div>
-           </div>
-         </header>
-         <div style={{...cardStyle, margin: '0 24px'}}>
-           <h2 style={{color: 'red'}}>Error: {pageError}</h2> 
-           <p>Asegúrate de que el servidor backend (`node index.js`) esté corriendo y que Veeam API sea accesible.</p>
-           <p>Los datos en caché no están disponibles.</p>
-         </div>
-       </div>
+        <ProgressBar isVisible={isBusy} />
+        <header
+          className="app-header no-print"
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            paddingBottom: '16px',
+            marginBottom: '24px',
+            padding: '0 24px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ marginRight: '16px' }}>
+              {/* MODIFICADO: onRefresh ahora es handleManualRefresh */}
+              <RefreshButton onRefresh={handleManualRefresh} isLoading={isLoadingData} />
+            </div>
+          </div>
+        </header>
+        <div style={{ ...cardStyle, margin: '0 24px' }}>
+          <h2 style={{ color: 'red' }}>Error: {pageError}</h2>
+          <p>Asegúrate de que el servidor backend (`node index.js`) esté corriendo y que Veeam API sea accesible.</p>
+          <p>Los datos en caché no están disponibles.</p>
+        </div>
+      </div>
     );
   }
 
   // --- Renderizado Normal (Hay datos en caché) ---
   return (
-    <div style={layoutStyle}>
-      <PrintHeader /> 
-      <PrintStyles /> 
-      
+    <div style={layoutStyle} className="dashboard-container">
+      <PrintHeader />
+      <PrintStyles />
+
       <ProgressBar isVisible={isBusy} />
 
-      <header 
-        className="app-header no-print" 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      <header
+        className="app-header no-print"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           paddingBottom: '16px',
           marginBottom: '24px',
           // --- AÑADE ESTA LÍNEA ---
-          marginTop: '24px' 
+          marginTop: '24px'
           // --- FIN DE LA LÍNEA ---
         }}
       >
@@ -1053,9 +1248,9 @@ export default function DashboardPage() {
           Última actualización: {lastRefreshTimestamp}
         </div>
 
-        <div style={{display: 'flex', alignItems: 'center'}}>
-          
-          <div style={{marginRight: '16px'}}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+
+          <div style={{ marginRight: '16px' }}>
             {/* MODIFICADO: onRefresh ahora es handleManualRefresh */}
             <RefreshButton onRefresh={handleManualRefresh} isLoading={isLoadingData} />
           </div>
@@ -1067,29 +1262,29 @@ export default function DashboardPage() {
           >
             Generar PDF
           </button>
-          
-          <div style={{marginLeft: '16px'}}>
+
+          <div style={{ marginLeft: '16px' }}>
             <ManualSendButton isSending={isSendingMail} setIsSending={setIsSendingMail} />
           </div>
 
-          <DateFilter onFilterChange={handleFilterChange} />
+          <DateFilter onFilterChange={handleFilterChange} onStatusChange={handleStatusFilterChange} />
         </div>
       </header>
-      
+
       {/* --- Banner de Error (Hay datos pero el refresco falló) --- */}
       {pageError && allData.sessions.length > 0 && (
         <ErrorBanner message={`${pageError}. Mostrando últimos datos cacheados.`} onClose={() => setPageError(null)} />
       )}
 
       {/* --- Contenido del Dashboard --- */}
-      <div style={{...cardStyle, marginTop: '16px'}}>
+      <div style={{ ...cardStyle, marginTop: '16px' }}>
         <h3 style={h3Style}>Historial de Jobs (Rango)</h3>
-        <JobsTable jobs={filteredJobs} />
+        <JobsTable jobs={filteredJobs} allJobs={allData.sessions} />
       </div>
 
-      <div style={{...cardStyle, marginTop: '24px'}}>
+      <div style={{ ...cardStyle, marginTop: '24px' }}>
         <h3 style={h3Style}>Último Resultado por Job</h3>
-        <LastResultGrid jobs={allData.sessions} />
+        <LastResultGrid jobs={filteredJobs} />
       </div>
 
       <div style={dualGridStyle}>
@@ -1114,7 +1309,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div style={{...cardStyle, marginTop: '24px'}}>
+      <div style={{ ...cardStyle, marginTop: '24px' }}>
         <h3 style={h3Style}>Puntos de Restauración por VM</h3>
         <RestorePointsGrid backupObjects={allData.backupObjects} />
       </div>
