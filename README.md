@@ -161,16 +161,6 @@ La aplicación React se abrirá en `http://localhost:3000`.
 
 ---
 
-## 🔒 Seguridad y Buenas Prácticas de Git
-
-Para evitar subir información sensible a GitHub, asegúrate de mantener actualizados los patrones de exclusión en `.gitignore`:
-
-- **NUNCA subas archivos `.env`** que contengan nombres de usuario, contraseñas o nombres de dominio.
-- **NUNCA subas la base de datos `veeam_history.db`** producida en entornos reales.
-- **NUNCA subas llaves o certificados SSL** (`*.cer`, `*.pem`, `*.key`).
-
----
-
 ## 🧑‍💻 Autor y Contacto
 
 - **Autor**: jh4n3r
