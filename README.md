@@ -30,6 +30,22 @@ A diferencia de la versión API REST, esta edición se conecta directamente al s
 
 ---
 
+## 🖼️ Capturas de Pantalla (Preview)
+
+### 📊 Dashboard Principal y Estado de Jobs
+![Dashboard - Resumen de Jobs y Repositorios](./images/ej2.png)
+
+### 📋 Historial de Sesiones y Exportación
+![Historial de Jobs](./images/ej1.png)
+
+### 🗺️ Topología y Esquema de Conexiones de Backup
+![Diagrama de Topologia de Backup](./images/ej3.png)
+
+### 📜 Visor de Logs y Trazas WinRM/PowerShell
+![Visor de Logs de Jobs](./images/ej4.png)
+
+---
+
 ## 📁 Estructura del Proyecto
 
 ```

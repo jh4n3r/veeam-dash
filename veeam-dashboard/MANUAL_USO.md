@@ -45,6 +45,8 @@ El **Veeam Dashboard** está diseñado con una interfaz moderna y responsiva. La
 
 Esta es la pantalla de control central para el operador de infraestructura.
 
+![Vista Principal de Dashboard y Repositorios](../images/ej2.png)
+
 ### 2.1 Indicadores KPI en Tiempo Real
 En la parte superior encontrarás tarjetas con métricas consolidadas:
 - **Total de Trabajos**: Número total de respaldos configurados.
@@ -72,6 +74,8 @@ Muestra el detalle estructurado de cada tarea:
 - **Tamaño Transferido**: Cantidad real transmitida por la red.
 - **Acciones**: Botón `Ver Detalle` para desplegar el modal.
 
+![Historial de Jobs y Filtros](../images/ej1.png)
+
 ### 2.4 Modal de Detalle de Trabajo
 Al hacer clic en un trabajo, se despliega una ventana modal con:
 - Lista de Objetos/VMs respaldadas en la sesión.
@@ -98,6 +102,8 @@ Esta sección permite auditar detalladamente los eventos generados durante las e
 - Haz clic en cualquier fila de log para expandir el cuadro de detalle.
 - Muestra el texto original emitido por los cmdlets de Veeam PowerShell (`Get-VBRBackupSession`), facilitando el diagnóstico técnico avanzado.
 
+![Visor de Logs e Inspector WinRM](../images/ej4.png)
+
 ---
 
 ## 4. Sección 3: Diagramas de Infraestructura (`/diagrams`)
@@ -108,6 +114,8 @@ Ofrece una visión ejecutiva y técnica del entorno de disponibilidad.
 - Muestra la cadena de conexión entre componentes:
   $$\text{Servidor Veeam B\&R} \longrightarrow \text{Proxies de Respaldo} \longrightarrow \text{Repositorios} \longrightarrow \text{Almacenamiento Secundario}$$
 - Identifica cuellos de botella y componentes involucrados en cada flujo.
+
+![Esquema Grafico de Conexiones y Topologia de Backup](../images/ej3.png)
 
 ### 4.2 Estado y Capacidad de Repositorios
 - Gráficos de barras que indican el espacio libre vs. utilizado en cada repositorio configurado (Local, NAS, SOBR, S3/Object Storage).

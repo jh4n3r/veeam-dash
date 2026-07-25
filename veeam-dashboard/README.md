@@ -19,6 +19,18 @@ Este directorio contiene la interfaz web de usuario (**Frontend**) de **Veeam Da
 
 ---
 
+## 🖼️ Capturas de Pantalla (Preview)
+
+| Dashboard KPI & Repositorios | Diagramas de Conexiones |
+| :---: | :---: |
+| ![Dashboard](../images/ej2.png) | ![Diagramas](../images/ej3.png) |
+
+| Historial de Jobs | Visor de Logs |
+| :---: | :---: |
+| ![Historial](../images/ej1.png) | ![Logs](../images/ej4.png) |
+
+---
+
 ## 📁 Estructura del Proyecto Frontend
 
 ```
